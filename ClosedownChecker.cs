@@ -103,8 +103,8 @@ namespace Closedown
             if (_token != null)
             {
                 DateTime expiration = DateTime.Parse(_token.expiration);
-
-                expired = expiration < DateTime.Now;
+                DateTime now = DateTime.Parse(_LinkhubAuth.getTime());
+                expired = expiration < now;
             }
 
             if (expired)
@@ -133,23 +133,31 @@ namespace Closedown
 
             request.Headers.Add("x-api-version", APIVersion);
 
+            request.Headers.Add("Accept-Encoding", "gzip, deflate");
+
+            request.AutomaticDecompression = DecompressionMethods.GZip;
+
             request.Method = "GET";
 
             try
             {
-                HttpWebResponse response = (HttpWebResponse)request.GetResponse();
-                Stream stReadData = response.GetResponseStream();
-
-                return fromJson<T>(stReadData);
-
+                using (HttpWebResponse response = (HttpWebResponse)request.GetResponse())
+                {
+                    using (Stream stReadData = response.GetResponseStream())
+                    {
+                        return fromJson<T>(stReadData);
+                    }
+                }
             }
             catch (Exception we)
             {
                 if (we is WebException && ((WebException)we).Response != null)
                 {
-                    Stream stReadData = ((WebException)we).Response.GetResponseStream();
-                    Response t = fromJson<Response>(stReadData);
-                    throw new ClosedownException(t.code, t.message);
+                    using (Stream stReadData = ((WebException)we).Response.GetResponseStream())
+                    {
+                        Response t = fromJson<Response>(stReadData);
+                        throw new ClosedownException(t.code, t.message);
+                    }
                 }
                 throw new ClosedownException(-99999999, we.Message);
             }
@@ -166,8 +174,10 @@ namespace Closedown
             request.Headers.Add("Authorization", "Bearer" + " " + bearerToken);
             
             request.Headers.Add("x-api-version", APIVersion);
-           
+            request.Headers.Add("Accept-Encoding", "gzip,deflate");
+
             request.Method = "POST";
+            request.AutomaticDecompression = DecompressionMethods.GZip;
 
             if (String.IsNullOrEmpty(PostData)) PostData = "";
 
@@ -179,19 +189,23 @@ namespace Closedown
 
             try
             {
-                HttpWebResponse response = (HttpWebResponse)request.GetResponse();
-                Stream stReadData = response.GetResponseStream();
-
-                return fromJson<T>(stReadData);
-
+                using (HttpWebResponse response = (HttpWebResponse)request.GetResponse())
+                {
+                    using (Stream stReadData = response.GetResponseStream())
+                    {
+                        return fromJson<T>(stReadData);
+                    }
+                }
             }
             catch (Exception we)
             {
                 if (we is WebException && ((WebException)we).Response != null)
                 {
-                    Stream stReadData = ((WebException)we).Response.GetResponseStream();
-                    Response t = fromJson<Response>(stReadData);
-                    throw new ClosedownException(t.code, t.message);
+                    using (Stream stReadData = ((WebException)we).Response.GetResponseStream())
+                    {
+                        Response t = fromJson<Response>(stReadData);
+                        throw new ClosedownException(t.code, t.message);
+                    }
                 }
                 throw new ClosedownException(-99999999, we.Message);
             }
